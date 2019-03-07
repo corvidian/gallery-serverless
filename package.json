@@ -1,0 +1,24 @@
+{
+  "name": "gallery-serverless",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "async": "^2.6.2",
+    "body-parser": "^1.18.3",
+    "express": "^4.16.4",
+    "gm": "^1.23.1",
+    "serverless-http": "^1.9.1",
+    "serverless-plugin-existing-s3": "^2.3.3"
+  },
+  "devDependencies": {
+    "aws-sdk": "^2.411.0",
+    "npm": "^6.8.0"
+  }
+}
