@@ -4,12 +4,14 @@ const express = require('express')
 const app = express()
 const AWS = require('aws-sdk');
 const Path = require('path');
+var cors = require('cors')
 
 const USERS_TABLE = process.env.USERS_TABLE;
 const IMAGE_BUCKET = process.env.IMAGE_BUCKET;
 const THUMB_BUCKET = process.env.THUMB_BUCKET;
 const dynamoDb = new AWS.DynamoDB.DocumentClient();
 
+app.use(cors());
 app.use(bodyParser.json({ strict: false }));
 
 app.get('/', function (req, res) {

@@ -98,22 +98,5 @@ module.exports.handler = function (event, context, callback) {
         }
         );
 
-        /*
-                async.waterfall([
-                    Lib.download.bind(this, s3, inputBucketName, filename),
-                    Lib.unzipZip,
-                    Lib.readManifestFile,
-                    Lib.createPdf,
-                    Lib.upload.bind(this, s3, outputBucketName, filename)
-                ], function(err) {
-                    if (err) {
-                        console.error(err)
-                    }
-                    else {
-                        console.log("Success!");
-                    }
-                    callback(null, "message");
-                });
-            */
     }
 };
