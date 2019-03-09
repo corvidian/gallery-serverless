@@ -5,9 +5,9 @@ module.exports.handler = function (event, context, callback) {
     const itemsTable = process.env.ITEMS_TABLE;
 
     const inputBucketName = event.Records[0].s3.bucket.name;
-    const filename = '/' + decodeURIComponent(event.Records[0].s3.object.key.replace(/\+/g, " "));
+    const filename = decodeURIComponent(event.Records[0].s3.object.key.replace(/\+/g, " "));
 
-    const path = Path.parse(filename)
+    const path = filename ? Path.parse(filename) : '/'
     const itemParent = path.dir === '/' ? '/' : path.dir + '/';
     
     const dynamo = new AWS.DynamoDB.DocumentClient();

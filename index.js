@@ -7,9 +7,9 @@ const Path = require('path');
 var cors = require('cors')
 
 const USERS_TABLE = process.env.USERS_TABLE;
+const ITEMS_TABLE = process.env.ITEMS_TABLE;
 const IMAGE_BUCKET = process.env.IMAGE_BUCKET;
 const THUMB_BUCKET = process.env.THUMB_BUCKET;
-const dynamoDb = new AWS.DynamoDB.DocumentClient();
 
 app.use(cors());
 app.use(bodyParser.json({ strict: false }));
@@ -39,49 +39,68 @@ app.get('/users/:userId', function (req, res) {
       res.status(404).json({ error: "User not found" });
     }
   });
-})
+});
 
 app.get('/gallery/:path(*)', function (req, res) {
+  console.log({ params: req.params });
+
   const path = decodeURI(req.params['path']).replace(/\+/g, ' ')
 
-  var params = {
-    Bucket: IMAGE_BUCKET,
-    Delimiter: '/',
-    Prefix: path
+  const params = {
+    TableName: ITEMS_TABLE,
+    KeyConditionExpression: "#par = :parent",
+    ExpressionAttributeNames: {
+      "#par": "parent"
+    },
+    ExpressionAttributeValues: {
+      ":parent": path ? path : '/'
+    }
   };
 
+  const dynamoDb = new AWS.DynamoDB.DocumentClient();
   const s3 = new AWS.S3();
-
-  s3.listObjects(params, function (err, data) {
+  
+  dynamoDb.query(params, function (err, data) {
     if (err) {
-      res.status(404).json({
-        error: "Not found",
+      console.error({ state: "dynDb list", error: err, params: params });
+      res.status(500).json({
+        error: "DynamoDb error",
         err: err,
         data: data,
         path: path
       });
     } else {
-      const files = data["Contents"].map((file) => (
-        {
-          type: 'image',
-          name: Path.basename(file["Key"]),
-          path: file["Key"],
-          thumbnail: s3.getSignedUrl('getObject', { Bucket: THUMB_BUCKET, Key: '300/' + file["Key"], Expires: 60 * 5}),
-          download: s3.getSignedUrl('getObject', { Bucket: IMAGE_BUCKET, Key: file["Key"], Expires: 60 * 15}),
-        }
-      ))
+      console.log({ state: "dynDb list", data: data, params: params });
 
-      const directories = data["CommonPrefixes"].map((dir) => (
-        {
-          type: 'folder',
-          name: Path.basename(dir["Prefix"]),
-          path: dir["Prefix"]
-        }
-      ))
+      const items = [];
+
+      data.Items
+        .filter(item => !item.private)
+        .forEach(function (item) {
+          console.log({ item: item });
+          var itemData;
+          if (item.type === 'image') {
+            itemData = {
+              type: 'image',
+              name: Path.basename(item.path),
+              path: item.path,
+              thumbnail: s3.getSignedUrl('getObject', { Bucket: THUMB_BUCKET, Key: '300/' + item.path, Expires: 60 * 5 }),
+              download: s3.getSignedUrl('getObject', { Bucket: IMAGE_BUCKET, Key: item.path, Expires: 60 * 15 }),
+            }
+          } else {
+            itemData = {
+              type: 'folder',
+              name: Path.basename(item.path),
+              path: item.path
+            }
+          }
+          console.log({ itemData: itemData });
+          items.push(itemData);
+        });
 
       res.json({
         path: path,
-        objects: directories.concat(files),
+        objects: items,
       });
     }
   });
