@@ -50,7 +50,15 @@ module.exports.handler = function (event, context, callback) {
                 );
             },
             function transform(response, next) {
-                gm(response.Body).size(function (err, size) {
+                gm(response.Body).identify(function (err, id) {
+                    if(err) next(err)
+
+                    if (id['Profiles'] && id['Profiles']['Profile-iptc'] && id['Profiles']['Profile-iptc']['Keyword[2,25]']) {
+                        console.log(id['Profiles']['Profile-iptc']['Keyword[2,25]']);
+                    }
+
+                    const size = id['size'];
+
                     // Infer the scaling factor to avoid stretching the image unnaturally.
                     const scalingFactor = Math.min(
                         MAX_WIDTH / size.width,
