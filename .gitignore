@@ -41,4 +41,5 @@ admin.env
 _meta
 .serverless
 
+*.code-workspace
 temp/

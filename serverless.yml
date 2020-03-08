@@ -11,7 +11,7 @@ custom:
 
 provider:
   name: aws
-  runtime: nodejs6.10
+  runtime: nodejs12.x
   stage: dev
   region: eu-north-1
   environment:
@@ -60,6 +60,8 @@ functions:
           cors: true
   thumb:
     handler: thumbs.handler
+    layers:
+      - arn:aws:lambda:eu-north-1:261158804248:layer:image-magick:1
     events:
       - existingS3:
           bucket: "${self:custom.imageBucket}"
