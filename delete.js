@@ -6,7 +6,7 @@ module.exports.handler = function (event, context, callback) {
 
     if (event.Records) {
         const itemsTable = process.env.ITEMS_TABLE;
-         const inputBucketName = event.Records[0].s3.bucket.name;
+        const inputBucketName = event.Records[0].s3.bucket.name;
         const thumbBucket = process.env.THUMB_BUCKET;
         const filename = decodeURIComponent(event.Records[0].s3.object.key.replace(/\+/g, " "));
 
@@ -22,14 +22,16 @@ module.exports.handler = function (event, context, callback) {
         const s3 = new AWS.S3();
         const dynamo = new AWS.DynamoDB.DocumentClient();
 
+        const path = filename ? Path.parse(filename) : '/'
+        const parent = (path.dir ? path.dir : '') + '/'
+
         async.waterfall([
             function removeItem(next) {
-                const path = filename ? Path.parse(filename) : '/'
                 console.log("path: ", path);
                 const params = {
                     TableName: itemsTable,
                     Key: {
-                        parent: path.dir ? path.dir : '/',
+                        parent: parent,
                         path: filename
                     }
                 };
@@ -56,8 +58,8 @@ module.exports.handler = function (event, context, callback) {
                 );
             } else {
                 console.log(
-                    'Successfully resized ' + inputBucketName + '/' + filename +
-                    ' and uploaded to ' + thumbBucket + '/' + outputKey
+                    'Successfully deleted ' + thumbBucket + '/' + outputKey +
+                    ' and removed ' + { parent: parent, path: filename } + ' from DynamoDB'
                 );
             }
         });
