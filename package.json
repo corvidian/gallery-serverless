@@ -15,7 +15,7 @@
     "cors": "^2.8.5",
     "express": "^4.16.4",
     "gm": "^1.23.1",
-    "serverless": "^1.71.3",
+    "serverless": "^1.83.3",
     "serverless-http": "^1.9.1",
     "serverless-plugin-existing-s3": "^2.3.3"
   },
