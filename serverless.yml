@@ -61,6 +61,8 @@ functions:
           cors: true
   thumb:
     handler: thumbs.handler
+    memorySize: 2048
+    timeout: 20
     layers:
       - arn:aws:lambda:eu-north-1:261158804248:layer:image-magick:1
     events:

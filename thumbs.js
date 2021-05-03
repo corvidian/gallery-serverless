@@ -54,7 +54,7 @@ module.exports.handler = function (event, context, callback) {
                     if(err) next(err)
 
                     if (id['Profiles'] && id['Profiles']['Profile-iptc'] && id['Profiles']['Profile-iptc']['Keyword[2,25]']) {
-                        console.log(id['Profiles']['Profile-iptc']['Keyword[2,25]']);
+                        console.log("Keywords: " + id['Profiles']['Profile-iptc']['Keyword[2,25]']);
                     }
 
                     const size = id['size'];
@@ -67,12 +67,15 @@ module.exports.handler = function (event, context, callback) {
                     const width = scalingFactor * size.width;
                     const height = scalingFactor * size.height;
 
+                    console.log("Transforming");
                     // Transform the image buffer in memory.
                     this.resize(width, height)
                         .toBuffer(imageType, function (err, buffer) {
                             if (err) {
+                                console.log("Resize error: " + err);
                                 next(err);
                             } else {
+                                console.log("Resize complete: " + response.ContentType);
                                 next(null, response.ContentType, buffer);
                             }
                         });
@@ -80,6 +83,7 @@ module.exports.handler = function (event, context, callback) {
             },
             function upload(contentType, data, next) {
                 // Stream the transformed image to a different S3 bucket.
+                console.log("Uploading: " + outputBucketName + " " + outputKey + " " + contentType)
                 s3.putObject({
                     Bucket: outputBucketName,
                     Key: outputKey,
@@ -90,11 +94,17 @@ module.exports.handler = function (event, context, callback) {
             }
         ], function (err) {
             if (err) {
-                console.error(
-                    'Unable to resize ' + inputBucketName + '/' + filename +
+                console.log(
+                    'LOG: Unable to resize ' + inputBucketName + '/' + filename +
                     ' and upload to ' + outputBucketName + '/' + outputKey +
                     ' due to an error: ' + err
                 );
+                console.error(
+                    'ERROR: Unable to resize ' + inputBucketName + '/' + filename +
+                    ' and upload to ' + outputBucketName + '/' + outputKey +
+                    ' due to an error: ' + err
+                );
+                console.log(JSON.stringify(err, null, 2));
             } else {
                 console.log(
                     'Successfully resized ' + inputBucketName + '/' + filename +
