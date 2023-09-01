@@ -21,15 +21,11 @@ pub struct ThumbnailInfo {
     pub keywords: Vec<String>,
 }
 
-pub fn handle_image<R: Read>(reader: R, image_path: &Path) -> ThumbnailInfo {
+pub fn handle_image<R: Read>(reader: R, image_path: &str) -> ThumbnailInfo {
     let image = decode_image(reader);
     let keywords = get_keywords(&image.photoshop_irb);
 
-    let filename = write_thumbnail(
-        image.imagedata,
-        &image.metadata,
-        image_path.file_name().unwrap().to_str().unwrap(),
-    );
+    let filename = write_thumbnail(image.imagedata, &image.metadata, image_path);
     ThumbnailInfo { filename, keywords }
 }
 
@@ -50,7 +46,7 @@ fn decode_image<T: Read>(reader: T) -> DecodedImage {
     }
 }
 
-fn write_thumbnail(imagedata: Vec<u8>, metadata: &ImageInfo, filename: &str) -> String {
+fn write_thumbnail(imagedata: Vec<u8>, metadata: &ImageInfo, image_path: &str) -> String {
     if metadata.pixel_format != PixelFormat::RGB24 {
         todo!("Only RGB24 pixel format is supported.");
     }
@@ -60,14 +56,22 @@ fn write_thumbnail(imagedata: Vec<u8>, metadata: &ImageInfo, filename: &str) -> 
             .expect("Image doesn't fit in it's own data?")
             .into();
 
-    let thumb_filename = format!("{THUMB_WIDTH}/{filename}");
-    fs::create_dir_all(format!("{THUMB_WIDTH}")).expect("Couldn't create directory {THUMB_WIDTH}");
-    let mut out_file = File::create(&thumb_filename).expect("Failed to create thumbnail file.");
+    let thumb_path = format!("thumbs/{THUMB_WIDTH}/{image_path}");
+    let path = Path::new(&thumb_path);
+    let parent = path
+        .parent()
+        .expect("No parent")
+        .as_os_str()
+        .to_str()
+        .unwrap();
+    fs::create_dir_all(&parent)
+        .expect(&format!("Couldn't create directory {parent}"));
+    let mut out_file = File::create(&path).expect("Failed to create thumbnail file.");
     img.thumbnail(THUMB_WIDTH, THUMB_HEIGHT)
         .write_to(&mut out_file, ImageOutputFormat::Jpeg(96))
         .expect("Error on file save");
 
-    thumb_filename
+    thumb_path
 }
 
 fn get_keywords(phostoshop_irb: &[Vec<u8>]) -> Vec<String> {

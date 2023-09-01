@@ -43,3 +43,7 @@ _meta
 
 *.code-workspace
 temp/
+
+#Rust
+rust-gallery/target
+rust-gallery/thumbs

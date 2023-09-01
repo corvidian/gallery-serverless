@@ -1,15 +1,13 @@
-use std::{
-    env,
-    fs::File,
-    io::{self},
-    path::Path,
-};
-
+use aws_config::meta::region::RegionProviderChain;
+use aws_sdk_s3::Client;
+use bytes::Buf;
+use std::{env, path::Path};
 use thumb::ThumbnailInfo;
 
 mod thumb;
 
-fn main() -> io::Result<()> {
+#[tokio::main]
+async fn main() -> Result<(), aws_sdk_s3::Error> {
     let image_path_str = env::args()
         .nth(1)
         .expect("No filename given, expecting image file.");
@@ -21,11 +19,22 @@ fn main() -> io::Result<()> {
         _ => {}
     }
 
-    let file = File::open(&image_path_str).expect("failed to open file");
+    let region_provider = RegionProviderChain::default_provider().or_else("eu-north-1");
+    let config = aws_config::from_env().region(region_provider).load().await;
+    let client = Client::new(&config);
+
+    let resp = client
+        .get_object()
+        .bucket("gallery-serverless")
+        .key(&image_path_str)
+        .send()
+        .await?;
+    let data = resp.body.collect().await.unwrap().into_bytes().reader();
+
     let ThumbnailInfo {
         filename: thumb_filename,
         keywords,
-    } = thumb::handle_image(file, image_path);
+    } = thumb::handle_image(data, &image_path_str);
 
     println!("Wrote thumbnail to {thumb_filename}");
     println!("Keywords are {}", keywords.join(", "));
