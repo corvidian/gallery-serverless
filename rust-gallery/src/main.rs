@@ -7,7 +7,7 @@ use thumb::ThumbnailInfo;
 mod thumb;
 
 #[tokio::main]
-async fn main() -> Result<(), aws_sdk_s3::Error> {
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let image_path_str = env::args()
         .nth(1)
         .expect("No filename given, expecting image file.");
@@ -28,7 +28,8 @@ async fn main() -> Result<(), aws_sdk_s3::Error> {
         .bucket("gallery-serverless")
         .key(&image_path_str)
         .send()
-        .await?;
+        .await
+        .map_err(Box::new)?;
     let data = resp.body.collect().await.unwrap().into_bytes().reader();
 
     let ThumbnailInfo {

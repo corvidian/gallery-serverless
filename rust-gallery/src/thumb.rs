@@ -64,9 +64,8 @@ fn write_thumbnail(imagedata: Vec<u8>, metadata: &ImageInfo, image_path: &str) -
         .as_os_str()
         .to_str()
         .unwrap();
-    fs::create_dir_all(&parent)
-        .expect(&format!("Couldn't create directory {parent}"));
-    let mut out_file = File::create(&path).expect("Failed to create thumbnail file.");
+    fs::create_dir_all(parent).unwrap_or_else(|_| panic!("Couldn't create directory {parent}"));
+    let mut out_file = File::create(path).expect("Failed to create thumbnail file.");
     img.thumbnail(THUMB_WIDTH, THUMB_HEIGHT)
         .write_to(&mut out_file, ImageOutputFormat::Jpeg(96))
         .expect("Error on file save");
