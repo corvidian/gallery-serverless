@@ -13,7 +13,7 @@ const THUMB_HEIGHT: u32 = 600;
 struct DecodedImage {
     imagedata: Vec<u8>,
     metadata: ImageInfo,
-    photoshop_irb: Vec<Vec<u8>>,
+    photoshop_irb: Option<Vec<u8>>,
 }
 
 pub struct ThumbnailInfo {
@@ -37,7 +37,7 @@ fn decode_image<T: Read>(reader: T) -> DecodedImage {
         .info()
         .expect("No metadata in image, can't get image dimensions.");
 
-    let photoshop_irb: Vec<_> = decoder.photoshop_irb().to_vec();
+    let photoshop_irb: Option<_> = decoder.photoshop_irb().map(|a| a.to_vec());
 
     DecodedImage {
         imagedata,
@@ -74,7 +74,7 @@ fn write_thumbnail(imagedata: Vec<u8>, metadata: &ImageInfo, image_path: &str) -
     thumb_path
 }
 
-fn get_keywords(phostoshop_irb: &[Vec<u8>]) -> Vec<String> {
+fn get_keywords(phostoshop_irb: &Option<Vec<u8>>) -> Vec<String> {
     phostoshop_irb
         .iter()
         .filter_map(|data| parse_keywords_from_photoshop_irb_data(data).ok())
